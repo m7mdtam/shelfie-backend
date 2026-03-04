@@ -17,7 +17,7 @@ export const Users: CollectionConfig = {
       return false
     },
     delete: async ({ req }) => {
-      if (req.user?.role === 'admin') return true
+      if (req.user) return true
       return false
     },
   },

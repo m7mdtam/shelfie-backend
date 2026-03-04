@@ -6,6 +6,21 @@ export const Users: CollectionConfig = {
     useAsTitle: 'email',
   },
   auth: true,
+  access: {
+    create: async () => true, // Allow public registration
+    read: async ({ req }) => {
+      if (req.user) return true // Authenticated users can read their own data
+      return false
+    },
+    update: async ({ req }) => {
+      if (req.user) return true // Users can update their own account
+      return false
+    },
+    delete: async ({ req }) => {
+      if (req.user?.role === 'admin') return true
+      return false
+    },
+  },
   fields: [
     {
       name: 'firstName',

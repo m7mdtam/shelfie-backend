@@ -32,5 +32,8 @@ export default buildConfig({
   }),
   sharp,
   plugins: [],
-  cors: ['http://localhost:5173'],
+  cors: [
+    'http://localhost:5173',
+    process.env.FRONTEND_URL || '',
+  ].filter(Boolean),
 })

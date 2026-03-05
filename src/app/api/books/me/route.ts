@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getPayload } from 'payload'
 import { headers as getHeaders } from 'next/headers'
 import config from '@/payload.config'
@@ -39,14 +40,58 @@ export async function GET(req: Request) {
       return Response.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders })
     }
 
-    // Get only the current user's books
+    // Parse query parameters
+    const url = new URL(req.url)
+    const limit = parseInt(url.searchParams.get('limit') || '10', 10)
+    const page = parseInt(url.searchParams.get('page') || '1', 10)
+
+    // Build where clause - start with owner filter, add additional filters from query
+    const whereParams: Record<string, any> = {}
+    const filters: any[] = [{ owner: { equals: user.id } }]
+
+    // Parse additional where parameters from query: where[field][operator]=value
+    const whereKeys = new Set<string>()
+    url.searchParams.forEach((value, key) => {
+      if (key.startsWith('where[')) {
+        whereKeys.add(key)
+      }
+    })
+
+    if (whereKeys.size > 0) {
+      const fieldFilters: Record<string, any> = {}
+
+      whereKeys.forEach((key) => {
+        const match = key.match(/where\[([^\]]+)\]\[([^\]]+)\]/)
+        if (match) {
+          const [, field, operator] = match
+          const value = url.searchParams.get(key)
+
+          if (!fieldFilters[field]) {
+            fieldFilters[field] = {}
+          }
+          fieldFilters[field][operator] = value
+        }
+      })
+
+      // Add field filters to the filters array
+      Object.entries(fieldFilters).forEach(([field, operators]) => {
+        filters.push({ [field]: operators })
+      })
+    }
+
+    // Build final where clause with AND
+    if (filters.length > 1) {
+      whereParams.and = filters
+    } else {
+      whereParams.owner = { equals: user.id }
+    }
+
+    // Get user's books with pagination and filters
     const books = await payload.find({
       collection: 'books',
-      where: {
-        owner: {
-          equals: user.id,
-        },
-      },
+      limit,
+      page,
+      where: whereParams,
       overrideAccess: false,
       user,
     })

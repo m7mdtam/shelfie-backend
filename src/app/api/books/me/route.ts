@@ -14,7 +14,7 @@ function getCorsHeaders(origin: string | null) {
 
   return {
     'Access-Control-Allow-Origin': isAllowed ? origin : allowedOrigins[0],
-    'Access-Control-Allow-Methods': 'GET, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Credentials': 'true',
   }
@@ -58,7 +58,7 @@ export async function GET(req: Request) {
   }
 }
 
-export async function PUT(req: Request) {
+export async function POST(req: Request) {
   const origin = req.headers.get('origin')
   const corsHeaders = getCorsHeaders(origin)
 
@@ -67,68 +67,25 @@ export async function PUT(req: Request) {
     const payload = await getPayload({ config })
     const { user } = await payload.auth({ headers })
 
-    // Require authentication
+    // Require authentication for creating books
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders })
-    }
-
-    const url = new URL(req.url)
-    const id = url.searchParams.get('id')
-
-    if (!id) {
-      return Response.json({ error: 'Book ID is required' }, { status: 400, headers: corsHeaders })
     }
 
     const body = await req.json()
 
-    // Update user's book
-    const book = await payload.update({
+    // Create a new book (owner is auto-assigned to current user by the Payload hook)
+    const book = await payload.create({
       collection: 'books',
-      id,
       data: body,
       user,
       overrideAccess: false,
+      draft: false,
     })
 
-    return Response.json(book, { headers: corsHeaders })
+    return Response.json(book, { status: 201, headers: corsHeaders })
   } catch (error) {
-    console.error('Error updating book:', error)
-    return Response.json({ error: 'Internal server error' }, { status: 500, headers: corsHeaders })
-  }
-}
-
-export async function DELETE(req: Request) {
-  const origin = req.headers.get('origin')
-  const corsHeaders = getCorsHeaders(origin)
-
-  try {
-    const headers = await getHeaders()
-    const payload = await getPayload({ config })
-    const { user } = await payload.auth({ headers })
-
-    // Require authentication
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders })
-    }
-
-    const url = new URL(req.url)
-    const id = url.searchParams.get('id')
-
-    if (!id) {
-      return Response.json({ error: 'Book ID is required' }, { status: 400, headers: corsHeaders })
-    }
-
-    // Delete user's book
-    await payload.delete({
-      collection: 'books',
-      id,
-      user,
-      overrideAccess: false,
-    })
-
-    return Response.json({ success: true, message: 'Book deleted' }, { headers: corsHeaders })
-  } catch (error) {
-    console.error('Error deleting book:', error)
+    console.error('Error creating book:', error)
     return Response.json({ error: 'Internal server error' }, { status: 500, headers: corsHeaders })
   }
 }

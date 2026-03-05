@@ -25,12 +25,12 @@ export async function OPTIONS(req: Request) {
   return new Response(null, { status: 200, headers: getCorsHeaders(origin) })
 }
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, props: { params: Promise<{ id: string }> }) {
+  const { id } = await props.params
   const origin = req.headers.get('origin')
   const corsHeaders = getCorsHeaders(origin)
 
   try {
-    const { id } = params
     const headers = await getHeaders()
     const payload = await getPayload({ config })
     const { user } = await payload.auth({ headers })
@@ -57,12 +57,12 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, props: { params: Promise<{ id: string }> }) {
+  const { id } = await props.params
   const origin = req.headers.get('origin')
   const corsHeaders = getCorsHeaders(origin)
 
   try {
-    const { id } = params
     const headers = await getHeaders()
     const payload = await getPayload({ config })
     const { user } = await payload.auth({ headers })
@@ -99,12 +99,12 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, props: { params: Promise<{ id: string }> }) {
+  const { id } = await props.params
   const origin = req.headers.get('origin')
   const corsHeaders = getCorsHeaders(origin)
 
   try {
-    const { id } = params
     const headers = await getHeaders()
     const payload = await getPayload({ config })
     const { user } = await payload.auth({ headers })

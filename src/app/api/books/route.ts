@@ -2,18 +2,33 @@ import { getPayload } from 'payload'
 import { headers as getHeaders } from 'next/headers'
 import config from '@/payload.config'
 
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': process.env.FRONTEND_URL || 'http://localhost:5173',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Access-Control-Allow-Credentials': 'true',
+function getCorsHeaders(origin: string | null) {
+  const allowedOrigins = [
+    process.env.FRONTEND_URL || 'https://shelfie-book.vercel.app',
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:3000',
+  ]
+
+  const isAllowed = origin && allowedOrigins.includes(origin)
+
+  return {
+    'Access-Control-Allow-Origin': isAllowed ? origin : allowedOrigins[0],
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+  }
 }
 
-export async function OPTIONS() {
-  return new Response(null, { status: 200, headers: CORS_HEADERS })
+export async function OPTIONS(req: Request) {
+  const origin = req.headers.get('origin')
+  return new Response(null, { status: 200, headers: getCorsHeaders(origin) })
 }
 
 export async function GET(req: Request) {
+  const origin = req.headers.get('origin')
+  const corsHeaders = getCorsHeaders(origin)
+
   try {
     const headers = await getHeaders()
     const payload = await getPayload({ config })
@@ -26,9 +41,9 @@ export async function GET(req: Request) {
       user,
     })
 
-    return Response.json(books, { headers: CORS_HEADERS })
+    return Response.json(books, { headers: corsHeaders })
   } catch (error) {
     console.error('Error fetching books:', error)
-    return Response.json({ error: 'Internal server error' }, { status: 500, headers: CORS_HEADERS })
+    return Response.json({ error: 'Internal server error' }, { status: 500, headers: corsHeaders })
   }
 }

@@ -7,6 +7,20 @@ export const Users: CollectionConfig = {
   },
   auth: {
     verify: true,
+    forgotPassword: {
+      generateEmailHTML: (args) => {
+        const { token, user } = args ?? {}
+        const baseURL = process.env.FRONTEND_URL || 'http://localhost:5173'
+        const resetURL = `${baseURL}/reset-password?token=${token}`
+        return `
+          <p>Hi ${user.email},</p>
+          <p>Click the link below to reset your password:</p>
+          <a href="${resetURL}">Reset Password</a>
+          <p>If you didn't request this, ignore this email.</p>
+        `
+      },
+      generateEmailSubject: () => 'Reset your Shelfie password',
+    },
   },
   access: {
     create: async () => true, // Allow public registration

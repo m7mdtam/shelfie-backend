@@ -5,7 +5,9 @@ export const Users: CollectionConfig = {
   admin: {
     useAsTitle: 'email',
   },
-  auth: true,
+  auth: {
+    verify: true,
+  },
   access: {
     create: async () => true, // Allow public registration
     read: async ({ req }) => {

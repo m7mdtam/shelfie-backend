@@ -6,7 +6,7 @@ export const Users: CollectionConfig = {
     useAsTitle: 'email',
   },
   auth: {
-    verify: true,
+    verify: process.env.ENABLE_EMAIL_VERIFICATION !== 'false',
     forgotPassword: {
       generateEmailHTML: (args) => {
         const { token, user } = args ?? {}

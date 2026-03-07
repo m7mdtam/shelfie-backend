@@ -48,5 +48,26 @@ export const Users: CollectionConfig = {
       type: 'text',
       required: true,
     },
+    {
+      name: 'profileImage',
+      type: 'upload',
+      relationTo: 'media',
+      required: false,
+    },
+    {
+      name: 'sex',
+      type: 'select',
+      options: [
+        { label: 'Male', value: 'male' },
+        { label: 'Female', value: 'female' },
+        { label: 'Prefer not to say', value: 'prefer-not-to-say' },
+      ],
+      required: false,
+    },
+    {
+      name: 'birthDate',
+      type: 'date',
+      required: false,
+    },
   ],
 }

@@ -70,6 +70,8 @@ export interface Config {
     users: User;
     media: Media;
     books: Book;
+    comments: Comment;
+    ratings: Rating;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -80,6 +82,8 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     books: BooksSelect<false> | BooksSelect<true>;
+    comments: CommentsSelect<false> | CommentsSelect<true>;
+    ratings: RatingsSelect<false> | RatingsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -127,6 +131,9 @@ export interface User {
   id: number;
   firstName: string;
   lastName: string;
+  profileImage?: (number | null) | Media;
+  sex?: ('male' | 'female' | 'prefer-not-to-say') | null;
+  birthDate?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -189,11 +196,36 @@ export interface Book {
       )
     | null;
   status: 'want-to-read' | 'reading' | 'finished';
-  rating?: number | null;
   coverImage?: (number | null) | Media;
   description?: string | null;
   isPublic?: boolean | null;
+  isDownloadable?: boolean | null;
+  downloadLink?: string | null;
   owner: number | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "comments".
+ */
+export interface Comment {
+  id: number;
+  book: number | Book;
+  user: number | User;
+  text: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ratings".
+ */
+export interface Rating {
+  id: number;
+  book: number | Book;
+  user: number | User;
+  rating: number;
   updatedAt: string;
   createdAt: string;
 }
@@ -232,6 +264,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'books';
         value: number | Book;
+      } | null)
+    | ({
+        relationTo: 'comments';
+        value: number | Comment;
+      } | null)
+    | ({
+        relationTo: 'ratings';
+        value: number | Rating;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -282,6 +322,9 @@ export interface PayloadMigration {
 export interface UsersSelect<T extends boolean = true> {
   firstName?: T;
   lastName?: T;
+  profileImage?: T;
+  sex?: T;
+  birthDate?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -326,11 +369,34 @@ export interface BooksSelect<T extends boolean = true> {
   author?: T;
   genre?: T;
   status?: T;
-  rating?: T;
   coverImage?: T;
   description?: T;
   isPublic?: T;
+  isDownloadable?: T;
+  downloadLink?: T;
   owner?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "comments_select".
+ */
+export interface CommentsSelect<T extends boolean = true> {
+  book?: T;
+  user?: T;
+  text?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ratings_select".
+ */
+export interface RatingsSelect<T extends boolean = true> {
+  book?: T;
+  user?: T;
+  rating?: T;
   updatedAt?: T;
   createdAt?: T;
 }

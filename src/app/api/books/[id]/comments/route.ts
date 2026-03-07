@@ -23,7 +23,7 @@ function formatComment(comment: any) {
   const user = comment.user as any
   return {
     id: String(comment.id),
-    bookId: String(typeof comment.book === 'object' ? comment.book?.id : comment.book),
+    id: String(typeof comment.book === 'object' ? comment.book?.id : comment.book),
     userId: user ? String(typeof user === 'object' ? user.id : user) : null,
     text: comment.text,
     user: user && typeof user === 'object'
@@ -39,8 +39,8 @@ export async function OPTIONS(req: Request) {
   return new Response(null, { status: 200, headers: getCorsHeaders(origin) })
 }
 
-export async function GET(req: Request, props: { params: Promise<{ bookId: string }> }) {
-  const { bookId } = await props.params
+export async function GET(req: Request, props: { params: Promise<{ id: string }> }) {
+  const { id } = await props.params
   const origin = req.headers.get('origin')
   const corsHeaders = getCorsHeaders(origin)
 
@@ -53,7 +53,7 @@ export async function GET(req: Request, props: { params: Promise<{ bookId: strin
 
     const result = await (payload.find as any)({
       collection: 'comments',
-      where: { book: { equals: bookId } },
+      where: { book: { equals: id } },
       page,
       limit,
       depth: 1,
@@ -73,13 +73,13 @@ export async function GET(req: Request, props: { params: Promise<{ bookId: strin
       { headers: corsHeaders },
     )
   } catch (error) {
-    console.error('[GET /books/:bookId/comments] Error:', error)
+    console.error('[GET /books/:id/comments] Error:', error)
     return Response.json({ error: 'Failed to fetch comments' }, { status: 500, headers: corsHeaders })
   }
 }
 
-export async function POST(req: Request, props: { params: Promise<{ bookId: string }> }) {
-  const { bookId } = await props.params
+export async function POST(req: Request, props: { params: Promise<{ id: string }> }) {
+  const { id } = await props.params
   const origin = req.headers.get('origin')
   const corsHeaders = getCorsHeaders(origin)
 
@@ -100,7 +100,7 @@ export async function POST(req: Request, props: { params: Promise<{ bookId: stri
 
     const comment = await (payload.create as any)({
       collection: 'comments',
-      data: { book: Number(bookId), user: user.id, text: text.trim() },
+      data: { book: Number(id), user: user.id, text: text.trim() },
       user,
       overrideAccess: false,
       depth: 1,
@@ -108,7 +108,7 @@ export async function POST(req: Request, props: { params: Promise<{ bookId: stri
 
     return Response.json(formatComment(comment), { status: 201, headers: corsHeaders })
   } catch (error) {
-    console.error('[POST /books/:bookId/comments] Error:', error)
+    console.error('[POST /books/:id/comments] Error:', error)
     return Response.json({ error: 'Failed to create comment' }, { status: 500, headers: corsHeaders })
   }
 }

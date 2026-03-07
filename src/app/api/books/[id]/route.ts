@@ -39,6 +39,7 @@ export async function GET(req: Request, props: { params: Promise<{ id: string }>
     const book = await payload.findByID({
       collection: 'books',
       id,
+      depth: 2,
       user,
       overrideAccess: false,
     })
@@ -60,10 +61,7 @@ export async function GET(req: Request, props: { params: Promise<{ id: string }>
       const userRatingResult = await (payload.find as any)({
         collection: 'ratings',
         where: {
-          and: [
-            { book: { equals: id } },
-            { user: { equals: user.id } },
-          ],
+          and: [{ book: { equals: id } }, { user: { equals: user.id } }],
         },
         limit: 1,
       })

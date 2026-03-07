@@ -25,8 +25,9 @@ export const Users: CollectionConfig = {
   access: {
     create: async () => true, // Allow public registration
     read: async ({ req }) => {
-      if (req.user) return true // Authenticated users can read their own data
-      return false
+      if (req.user) return true // Authenticated users can read all their data
+      // Public can read non-sensitive fields only
+      return true // Will be restricted via field-level access below
     },
     update: async ({ req }) => {
       if (req.user) return true // Users can update their own account
@@ -42,17 +43,26 @@ export const Users: CollectionConfig = {
       name: 'firstName',
       type: 'text',
       required: true,
+      access: {
+        read: () => true, // Public readable
+      },
     },
     {
       name: 'lastName',
       type: 'text',
       required: true,
+      access: {
+        read: () => true, // Public readable
+      },
     },
     {
       name: 'profileImage',
       type: 'upload',
       relationTo: 'media',
       required: false,
+      access: {
+        read: () => true, // Public readable
+      },
     },
     {
       name: 'sex',
@@ -63,11 +73,17 @@ export const Users: CollectionConfig = {
         { label: 'Prefer not to say', value: 'prefer-not-to-say' },
       ],
       required: false,
+      access: {
+        read: ({ req }) => Boolean(req.user), // Authenticated only
+      },
     },
     {
       name: 'birthDate',
       type: 'date',
       required: false,
+      access: {
+        read: ({ req }) => Boolean(req.user), // Authenticated only
+      },
     },
   ],
 }

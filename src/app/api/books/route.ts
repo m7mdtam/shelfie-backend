@@ -122,6 +122,7 @@ export async function GET(req: Request) {
       collection: 'books',
       limit,
       page,
+      depth: 2,
       ...(Object.keys(whereParams).length > 0 && { where: whereParams }),
       overrideAccess: false,
       user,

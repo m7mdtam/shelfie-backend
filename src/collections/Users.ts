@@ -74,7 +74,7 @@ export const Users: CollectionConfig = {
       ],
       required: false,
       access: {
-        read: ({ req }) => Boolean(req.user), // Authenticated only
+        read: () => true, // Public readable
       },
     },
     {
@@ -82,7 +82,7 @@ export const Users: CollectionConfig = {
       type: 'date',
       required: false,
       access: {
-        read: ({ req }) => Boolean(req.user), // Authenticated only
+        read: () => true, // Public readable
       },
     },
   ],

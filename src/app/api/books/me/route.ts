@@ -21,6 +21,45 @@ function getCorsHeaders(origin: string | null) {
   }
 }
 
+// Helper function to enrich a book with rating information
+async function enrichBookWithRatings(
+  book: any,
+  bookId: string | number,
+  userId: string | number | null,
+  payload: any,
+) {
+  // Fetch ratings for this book
+  const allRatings = await (payload.find as any)({
+    collection: 'ratings',
+    where: { book: { equals: String(bookId) } },
+    limit: 0,
+  })
+
+  const totalRatings = allRatings.totalDocs
+  const sum = allRatings.docs.reduce((acc: number, r: any) => acc + r.rating, 0)
+  const averageRating = totalRatings > 0 ? Math.round((sum / totalRatings) * 10) / 10 : 0
+
+  // Get current user's rating if authenticated
+  let userRating: number | null = null
+  if (userId) {
+    const userRatingResult = await (payload.find as any)({
+      collection: 'ratings',
+      where: {
+        and: [{ book: { equals: String(bookId) } }, { user: { equals: String(userId) } }],
+      },
+      limit: 1,
+    })
+    userRating = userRatingResult.docs.length > 0 ? userRatingResult.docs[0].rating : null
+  }
+
+  return {
+    ...book,
+    averageRating,
+    userRating,
+    totalRatings,
+  }
+}
+
 export async function OPTIONS(req: Request) {
   const origin = req.headers.get('origin')
   return new Response(null, { status: 200, headers: getCorsHeaders(origin) })
@@ -96,7 +135,20 @@ export async function GET(req: Request) {
       user,
     })
 
-    return Response.json(books, { headers: corsHeaders })
+    // Enrich each book with rating information
+    const enrichedBooks = await Promise.all(
+      books.docs.map((book) =>
+        enrichBookWithRatings(book, String(book.id), String(user.id), payload),
+      ),
+    )
+
+    return Response.json(
+      {
+        ...books,
+        docs: enrichedBooks,
+      },
+      { headers: corsHeaders },
+    )
   } catch (error) {
     console.error('Error fetching user books:', error)
     return Response.json({ error: 'Internal server error' }, { status: 500, headers: corsHeaders })

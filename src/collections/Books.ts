@@ -6,31 +6,18 @@ export const Books: CollectionConfig = {
     useAsTitle: 'title',
   },
   access: {
-    read: ({ req: { user }, data }) => {
-      // Public books are readable by anyone; private books only by owner
+    read: ({ req: { user } }) => {
       if (user) return true
-      return {
-        isPublic: {
-          equals: true,
-        },
-      }
+      return { isPublic: { equals: true } }
     },
     create: ({ req: { user } }) => Boolean(user),
     update: ({ req: { user } }) => {
       if (!user) return false
-      return {
-        owner: {
-          equals: user.id,
-        },
-      }
+      return { owner: { equals: user.id } }
     },
     delete: ({ req: { user } }) => {
       if (!user) return false
-      return {
-        owner: {
-          equals: user.id,
-        },
-      }
+      return { owner: { equals: user.id } }
     },
   },
   fields: [
@@ -73,12 +60,6 @@ export const Books: CollectionConfig = {
       ],
     },
     {
-      name: 'rating',
-      type: 'number',
-      min: 1,
-      max: 5,
-    },
-    {
       name: 'coverImage',
       type: 'upload',
       relationTo: 'media',
@@ -118,7 +99,6 @@ export const Books: CollectionConfig = {
       hooks: {
         beforeChange: [
           ({ req, value }) => {
-            // Auto-assign owner to the logged-in user on create
             if (!value && req.user) return req.user.id
             return value
           },

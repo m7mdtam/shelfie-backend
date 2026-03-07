@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getPayload } from 'payload'
 import { headers as getHeaders } from 'next/headers'
 import config from '@/payload.config'
@@ -35,7 +36,6 @@ export async function GET(req: Request, props: { params: Promise<{ id: string }>
     const payload = await getPayload({ config })
     const { user } = await payload.auth({ headers })
 
-    // Get single book - access control handled by Payload
     const book = await payload.findByID({
       collection: 'books',
       id,
@@ -43,12 +43,41 @@ export async function GET(req: Request, props: { params: Promise<{ id: string }>
       overrideAccess: false,
     })
 
-    return Response.json(book, { headers: corsHeaders })
+    // Fetch ratings for this book
+    const allRatings = await (payload.find as any)({
+      collection: 'ratings',
+      where: { book: { equals: id } },
+      limit: 0,
+    })
+
+    const totalRatings = allRatings.totalDocs
+    const sum = allRatings.docs.reduce((acc: number, r: any) => acc + r.rating, 0)
+    const averageRating = totalRatings > 0 ? Math.round((sum / totalRatings) * 10) / 10 : 0
+
+    // Get current user's rating if authenticated
+    let userRating: number | null = null
+    if (user) {
+      const userRatingResult = await (payload.find as any)({
+        collection: 'ratings',
+        where: {
+          and: [
+            { book: { equals: id } },
+            { user: { equals: user.id } },
+          ],
+        },
+        limit: 1,
+      })
+      userRating = userRatingResult.docs.length > 0 ? userRatingResult.docs[0].rating : null
+    }
+
+    return Response.json(
+      { ...book, averageRating, userRating, totalRatings },
+      { headers: corsHeaders },
+    )
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error)
     console.error('[GET /books/[id]] Error:', errorMessage)
 
-    // Return 404 if book not found or access denied
     if (errorMessage.includes('not found') || errorMessage.includes('Unauthorized')) {
       return Response.json({ error: 'Book not found' }, { status: 404, headers: corsHeaders })
     }
@@ -67,14 +96,12 @@ export async function PUT(req: Request, props: { params: Promise<{ id: string }>
     const payload = await getPayload({ config })
     const { user } = await payload.auth({ headers })
 
-    // Require authentication
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders })
     }
 
     const body = await req.json()
 
-    // Update book - access control (ownership) handled by Payload
     const book = await payload.update({
       collection: 'books',
       id,
@@ -109,12 +136,10 @@ export async function DELETE(req: Request, props: { params: Promise<{ id: string
     const payload = await getPayload({ config })
     const { user } = await payload.auth({ headers })
 
-    // Require authentication
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders })
     }
 
-    // Delete book - access control (ownership) handled by Payload
     await payload.delete({
       collection: 'books',
       id,

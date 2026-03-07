@@ -23,7 +23,7 @@ function formatComment(comment: any) {
   const user = comment.user as any
   return {
     id: String(comment.id),
-    id: String(typeof comment.book === 'object' ? comment.book?.id : comment.book),
+    bookId: String(typeof comment.book === 'object' ? comment.book?.id : comment.book),
     userId: user ? String(typeof user === 'object' ? user.id : user) : null,
     text: comment.text,
     user: user && typeof user === 'object'

@@ -93,6 +93,24 @@ export const Books: CollectionConfig = {
       defaultValue: false,
     },
     {
+      name: 'isDownloadable',
+      type: 'checkbox',
+      defaultValue: false,
+    },
+    {
+      name: 'downloadLink',
+      type: 'text',
+      validate: (value: string | null | undefined, { data }: { data: Record<string, unknown> }) => {
+        if (data?.isDownloadable && !value) {
+          return 'Download link is required when the book is downloadable.'
+        }
+        return true
+      },
+      admin: {
+        condition: (data) => Boolean(data?.isDownloadable),
+      },
+    },
+    {
       name: 'owner',
       type: 'relationship',
       relationTo: 'users',

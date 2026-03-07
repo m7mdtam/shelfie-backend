@@ -1,5 +1,6 @@
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { resendAdapter } from '@payloadcms/email-resend'
+import { vercelBlobStorage } from '@payloadcms/storage-vercel-blob'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
 import { buildConfig } from 'payload'
@@ -38,7 +39,15 @@ export default buildConfig({
     apiKey: process.env.RESEND_API_KEY || '',
   }),
   sharp,
-  plugins: [],
+  plugins: [
+    vercelBlobStorage({
+      enabled: !!process.env.BLOB_READ_WRITE_TOKEN,
+      token: process.env.BLOB_READ_WRITE_TOKEN || '',
+      collections: {
+        media: true,
+      },
+    }),
+  ],
   cors: [
     'http://localhost:5173',
     process.env.FRONTEND_URL || '',
